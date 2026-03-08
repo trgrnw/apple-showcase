@@ -76,6 +76,9 @@ export default function AdminPage() {
     try {
       await updateSupplyStatus(id, status);
       qc.invalidateQueries({ queryKey: ["supplies"] });
+      if (status === "received") {
+        qc.invalidateQueries({ queryKey: ["products"] });
+      }
       toast.success(`Статус поставки: ${supplyStatusLabels[status]}`);
     } catch { toast.error("Ошибка обновления"); }
   };
