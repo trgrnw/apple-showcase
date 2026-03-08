@@ -551,19 +551,20 @@ export default function ProductPage() {
             <h2 className="text-2xl font-bold mb-6">Рекомендуемые аксессуары</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
-                { name: "Чехол MagSafe", desc: "Оригинальный силиконовый чехол с поддержкой MagSafe", price: "от 4 990 ₽", img: "cases" },
-                { name: "Зарядное устройство MagSafe", desc: "Беспроводная зарядка 15 Вт", price: "от 3 990 ₽", img: "charger" },
-                { name: "AirPods Pro", desc: "Наушники с активным шумоподавлением", price: "от 19 990 ₽", img: "airpods-pro" },
-                { name: "Защитное стекло", desc: "Керамическое стекло с олеофобным покрытием", price: "от 1 490 ₽", img: "accessories" },
+                { name: "Чехол MagSafe", desc: "Оригинальный силиконовый чехол с поддержкой MagSafe", price: "от 4 990 ₽", img: "cases", link: "/category/accessories" },
+                { name: "Зарядное устройство MagSafe", desc: "Беспроводная зарядка 15 Вт", price: "от 3 990 ₽", img: "charger", link: "/category/accessories" },
+                { name: "AirPods Pro", desc: "Наушники с активным шумоподавлением", price: "от 19 990 ₽", img: "airpods-pro", link: "/category/airpods" },
+                { name: "Защитное стекло", desc: "Керамическое стекло с олеофобным покрытием", price: "от 1 490 ₽", img: "accessories", link: "/category/accessories" },
               ].map((acc) => (
-                <div key={acc.name} className="glass-card rounded-xl p-4 flex gap-4 items-center">
+                <Link key={acc.name} to={acc.link} className="glass-card rounded-xl p-4 flex gap-4 items-center hover:ring-1 hover:ring-primary/50 transition-all">
                   <img src={getImageForProduct(acc.img)} alt={acc.name} className="w-16 h-16 rounded-lg object-cover" />
                   <div className="flex-1 min-w-0">
                     <h4 className="font-medium text-sm">{acc.name}</h4>
                     <p className="text-xs text-muted-foreground line-clamp-1">{acc.desc}</p>
                     <p className="text-sm font-semibold mt-1">{acc.price}</p>
                   </div>
-                </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                </Link>
               ))}
             </div>
           </motion.div>
