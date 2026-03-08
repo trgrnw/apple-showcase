@@ -234,6 +234,8 @@ export function Header() {
               <Link to="/auth" onClick={() => setMenuOpen(false)} className="block px-3 py-2 text-sm text-primary">Войти / Регистрация</Link>
             )}
           </div>
+          </div>
+          </div>
         </div>
       )}
     </header>
