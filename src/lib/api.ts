@@ -225,42 +225,29 @@ export async function fetchProductReviews(productId: string): Promise<Review[]> 
 export async function createReview(review: {
   product_id: string;
   user_id: string;
-  order_id: string;
+  order_id?: string;
   rating: number;
   text: string;
   author_name: string;
 }) {
-  const { error } = await supabase.from("reviews").insert(review);
+  const { error } = await supabase.from("reviews").insert({
+    ...review,
+    order_id: review.order_id || '',
+  });
   if (error) throw error;
 }
 
-export async function checkUserCanReview(userId: string, productId: string): Promise<{ canReview: boolean; orderId: string | null }> {
-  // Check if user has ordered this product
-  const { data: orderItems, error } = await supabase
-    .from("order_items")
-    .select("order_id, orders!order_items_order_id_fkey(customer_email)")
-    .eq("product_id", productId);
-  if (error) return { canReview: false, orderId: null };
+export async function deleteReview(reviewId: string) {
+  const { error } = await supabase.from("reviews").delete().eq("id", reviewId);
+  if (error) throw error;
+}
 
-  // Get user email
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user?.email) return { canReview: false, orderId: null };
-
-  const matchingItem = (orderItems || []).find((item: any) =>
-    item.orders?.customer_email === user.email
-  );
-
-  if (!matchingItem) return { canReview: false, orderId: null };
-
-  // Check if already reviewed
-  const { data: existingReview } = await supabase
-    .from("reviews")
-    .select("id")
-    .eq("product_id", productId)
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (existingReview) return { canReview: false, orderId: null };
-
-  return { canReview: true, orderId: matchingItem.order_id };
+export async function fetchUserOrdersByEmail(email: string) {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("customer_email", email)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data || [];
 }

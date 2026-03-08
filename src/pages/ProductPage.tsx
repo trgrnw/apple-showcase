@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   fetchProductById, fetchProductVariants, fetchProductReviews,
-  addFavorite, removeFavorite, createReview, checkUserCanReview,
+  addFavorite, removeFavorite, createReview, deleteReview,
   ProductVariant, Review,
 } from "@/lib/api";
 import { getImageForProduct } from "@/data/products";
