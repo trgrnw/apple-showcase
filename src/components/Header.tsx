@@ -140,6 +140,25 @@ export function Header() {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
+          {user ? (
+            <div className="hidden md:flex items-center gap-1">
+              <Link to="/profile" className="text-muted-foreground hover:text-foreground transition-colors p-2">
+                <User className="h-5 w-5" />
+              </Link>
+              {isAdmin && (
+                <Link to="/admin" className="text-primary hover:text-primary/80 transition-colors p-2">
+                  <Shield className="h-5 w-5" />
+                </Link>
+              )}
+            </div>
+          ) : (
+            <Link to="/auth" className="hidden md:block">
+              <Button size="sm" variant="outline" className="gap-1 h-8">
+                <User className="h-4 w-4" /> Войти
+              </Button>
+            </Link>
+          )}
+
           {user && (
             <Link to="/profile?tab=favorites" className="relative text-muted-foreground hover:text-foreground transition-colors p-2">
               <Heart className={`h-5 w-5 ${favoriteIds.length > 0 ? "fill-primary text-primary" : ""}`} />
@@ -160,26 +179,10 @@ export function Header() {
             )}
           </Link>
 
-          {user ? (
-            <div className="hidden md:flex items-center gap-1">
-              {isAdmin && (
-                <Link to="/admin" className="text-primary hover:text-primary/80 transition-colors p-2">
-                  <Shield className="h-5 w-5" />
-                </Link>
-              )}
-              <Link to="/profile" className="text-muted-foreground hover:text-foreground transition-colors p-2">
-                <User className="h-5 w-5" />
-              </Link>
-              <button onClick={signOut} className="text-muted-foreground hover:text-foreground transition-colors p-2">
-                <LogOut className="h-5 w-5" />
-              </button>
-            </div>
-          ) : (
-            <Link to="/auth" className="hidden md:block">
-              <Button size="sm" variant="outline" className="gap-1 h-8">
-                <User className="h-4 w-4" /> Войти
-              </Button>
-            </Link>
+          {user && (
+            <button onClick={signOut} className="hidden md:block text-muted-foreground hover:text-foreground transition-colors p-2">
+              <LogOut className="h-5 w-5" />
+            </button>
           )}
 
           <button onClick={() => setMenuOpen(!menuOpen)} className="lg:hidden text-muted-foreground p-2">
@@ -190,7 +193,8 @@ export function Header() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="lg:hidden border-t bg-background/95 backdrop-blur-xl p-4 space-y-2 animate-slide-down">
+        <div className="lg:hidden fixed inset-x-0 top-14 bottom-0 z-40 border-t bg-background/95 backdrop-blur-xl overflow-y-auto overscroll-contain touch-auto">
+          <div className="p-4 space-y-2">
           {/* Mobile search */}
           <input
             type="text"
@@ -229,6 +233,7 @@ export function Header() {
             ) : (
               <Link to="/auth" onClick={() => setMenuOpen(false)} className="block px-3 py-2 text-sm text-primary">Войти / Регистрация</Link>
             )}
+          </div>
           </div>
         </div>
       )}
