@@ -6,6 +6,16 @@ export type DbOrder = Tables<"orders">;
 export type DbOrderItem = Tables<"order_items">;
 export type DbSupply = Tables<"supplies">;
 
+export interface ProductVariant {
+  id: string;
+  product_id: string;
+  color: string;
+  storage: string;
+  price: number;
+  in_stock: number;
+  image_key: string;
+}
+
 // Products
 export async function fetchProducts() {
   const { data, error } = await supabase.from("products").select("*").order("name");
@@ -29,6 +39,16 @@ export async function fetchProductById(id: string) {
   const { data, error } = await supabase.from("products").select("*").eq("id", id).single();
   if (error) throw error;
   return data;
+}
+
+export async function fetchProductVariants(productId: string): Promise<ProductVariant[]> {
+  const { data, error } = await supabase
+    .from("product_variants")
+    .select("*")
+    .eq("product_id", productId)
+    .order("price");
+  if (error) throw error;
+  return (data || []) as unknown as ProductVariant[];
 }
 
 export async function searchProducts(query: string) {
@@ -128,7 +148,7 @@ export async function fetchFavorites(userId: string) {
 
 export async function addFavorite(userId: string, productId: string) {
   const { error } = await supabase.from("favorites").insert({ user_id: userId, product_id: productId });
-  if (error && error.code !== "23505") throw error; // ignore duplicate
+  if (error && error.code !== "23505") throw error;
 }
 
 export async function removeFavorite(userId: string, productId: string) {
