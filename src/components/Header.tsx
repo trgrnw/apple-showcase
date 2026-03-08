@@ -82,6 +82,7 @@ export function Header() {
   const isDropdownOpen = (catId: string) => hoveredCat === catId || tappedCat === catId;
 
   return (
+    <>
     <header className="sticky top-0 z-50 glass-card border-b">
       <div className="container mx-auto flex h-14 items-center justify-between px-4 gap-4">
         {/* Logo */}
@@ -213,38 +214,39 @@ export function Header() {
           </button>
         </div>
       </div>
-
-      {/* Mobile menu */}
-      {menuOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-14 bottom-0 z-[60] border-t bg-background backdrop-blur-xl overflow-y-auto overscroll-contain touch-auto">
-          <div className="p-4 space-y-2">
-          {/* Mobile search */}
-          <input
-            type="text"
-            placeholder="Поиск товаров..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-9 rounded-lg bg-secondary/80 border-0 px-4 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 mb-2"
-          />
-          {categories.map((c) => (
-            <MobileCategoryItem key={c.id} category={c} onClose={() => setMenuOpen(false)} />
-          ))}
-          <Link to="/faq" onClick={() => setMenuOpen(false)} className="block px-3 py-2 text-sm font-medium hover:text-foreground">FAQ</Link>
-          <div className="border-t pt-2 mt-2">
-            {user ? (
-              <>
-                <Link to="/profile" onClick={() => setMenuOpen(false)} className="block px-3 py-2 text-sm">Профиль</Link>
-                {isAdmin && <Link to="/admin" onClick={() => setMenuOpen(false)} className="block px-3 py-2 text-sm text-primary">Админ-панель</Link>}
-                <button onClick={() => { signOut(); setMenuOpen(false); }} className="block px-3 py-2 text-sm text-muted-foreground w-full text-left">Выйти</button>
-              </>
-            ) : (
-              <Link to="/auth" onClick={() => setMenuOpen(false)} className="block px-3 py-2 text-sm text-primary">Войти / Регистрация</Link>
-            )}
-          </div>
-          </div>
-        </div>
-      )}
     </header>
+
+    {/* Mobile menu - outside header to avoid backdrop-filter containing block */}
+    {menuOpen && (
+      <div className="lg:hidden fixed inset-x-0 top-14 bottom-0 z-[60] border-t bg-background overflow-y-auto overscroll-contain touch-auto">
+        <div className="p-4 space-y-2">
+        {/* Mobile search */}
+        <input
+          type="text"
+          placeholder="Поиск товаров..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full h-9 rounded-lg bg-secondary/80 border-0 px-4 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 mb-2"
+        />
+        {categories.map((c) => (
+          <MobileCategoryItem key={c.id} category={c} onClose={() => setMenuOpen(false)} />
+        ))}
+        <Link to="/faq" onClick={() => setMenuOpen(false)} className="block px-3 py-2 text-sm font-medium hover:text-foreground">FAQ</Link>
+        <div className="border-t pt-2 mt-2">
+          {user ? (
+            <>
+              <Link to="/profile" onClick={() => setMenuOpen(false)} className="block px-3 py-2 text-sm">Профиль</Link>
+              {isAdmin && <Link to="/admin" onClick={() => setMenuOpen(false)} className="block px-3 py-2 text-sm text-primary">Админ-панель</Link>}
+              <button onClick={() => { signOut(); setMenuOpen(false); }} className="block px-3 py-2 text-sm text-muted-foreground w-full text-left">Выйти</button>
+            </>
+          ) : (
+            <Link to="/auth" onClick={() => setMenuOpen(false)} className="block px-3 py-2 text-sm text-primary">Войти / Регистрация</Link>
+          )}
+        </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 
