@@ -2,17 +2,16 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchOrderByTrackingCode, fetchOrderItems } from "@/lib/api";
-import { getImageForProduct } from "@/data/products";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Package, Truck, CheckCircle, Search } from "lucide-react";
+import { Search, SlidersHorizontal, X } from "lucide-react";
 
-const statusMap: Record<string, { label: string; step: number }> = {
-  pending: { label: "Ожидает обработки", step: 0 },
-  processing: { label: "В обработке", step: 1 },
-  shipped: { label: "В пути", step: 2 },
-  delivered: { label: "Доставлен", step: 3 },
+const statusMap: Record<string, { label: string; step: number; color: string }> = {
+  pending: { label: "Ожидает обработки", step: 0, color: "secondary" },
+  processing: { label: "В обработке", step: 1, color: "secondary" },
+  shipped: { label: "В пути", step: 2, color: "default" },
+  delivered: { label: "Доставлен", step: 3, color: "default" },
 };
 
 const steps = ["Ожидание", "Обработка", "В пути", "Доставлен"];
@@ -21,6 +20,8 @@ export default function TrackOrderPage() {
   const [searchParams] = useSearchParams();
   const [code, setCode] = useState(searchParams.get("code") || "");
   const [searchCode, setSearchCode] = useState(searchParams.get("code") || "");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
     const c = searchParams.get("code");
@@ -44,12 +45,15 @@ export default function TrackOrderPage() {
 
   const currentStep = order ? (statusMap[order.status]?.step ?? 0) : 0;
 
+  const showOrder = order && (filterStatus === "all" || order.status === filterStatus);
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
       <h1 className="text-3xl font-bold mb-8">Отслеживание заказа</h1>
-      <div className="flex gap-2 mb-8">
+
+      <div className="flex gap-2 mb-4">
         <Input
-          placeholder="Введите код отслеживания (APL-XXXXX)"
+          placeholder="Введите код отслеживания (DBR-XXXXX)"
           value={code}
           onChange={(e) => setCode(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && setSearchCode(code)}
@@ -59,13 +63,62 @@ export default function TrackOrderPage() {
         </Button>
       </div>
 
+      {/* Filters */}
+      <div className="flex items-center gap-2 mb-6">
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1"
+          onClick={() => setFiltersOpen(!filtersOpen)}
+        >
+          <SlidersHorizontal className="h-4 w-4" /> Фильтр по статусу
+        </Button>
+        {filterStatus !== "all" && (
+          <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => setFilterStatus("all")}>
+            {statusMap[filterStatus]?.label} <X className="h-3 w-3" />
+          </Badge>
+        )}
+      </div>
+
+      {filtersOpen && (
+        <div className="glass-card rounded-xl p-4 mb-6 animate-slide-down">
+          <div className="flex items-center justify-between mb-3">
+            <span className="font-semibold text-sm">Статус заказа</span>
+            <button onClick={() => setFiltersOpen(false)}><X className="h-4 w-4" /></button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => { setFilterStatus("all"); setFiltersOpen(false); }}
+              className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${filterStatus === "all" ? "border-primary bg-primary/10 text-foreground" : "border-border hover:border-primary/50 text-muted-foreground"}`}
+            >
+              Все
+            </button>
+            {Object.entries(statusMap).map(([key, val]) => (
+              <button
+                key={key}
+                onClick={() => { setFilterStatus(key); setFiltersOpen(false); }}
+                className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${filterStatus === key ? "border-primary bg-primary/10 text-foreground" : "border-border hover:border-primary/50 text-muted-foreground"}`}
+              >
+                {val.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {searchCode && !order && (
         <div className="glass-card rounded-xl p-8 text-center">
           <p className="text-muted-foreground">Заказ с кодом <strong>{searchCode}</strong> не найден</p>
         </div>
       )}
 
-      {order && (
+      {order && !showOrder && (
+        <div className="glass-card rounded-xl p-8 text-center">
+          <p className="text-muted-foreground">Заказ найден, но не соответствует выбранному фильтру</p>
+        </div>
+      )}
+
+      {showOrder && (
         <div className="glass-card rounded-xl p-6 space-y-6">
           <div className="flex items-center justify-between">
             <div>

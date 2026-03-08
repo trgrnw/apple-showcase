@@ -5,6 +5,7 @@ import { fetchProductsByCategory } from "@/lib/api";
 import { ProductCard } from "@/components/ProductCard";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { SlidersHorizontal, X } from "lucide-react";
 
@@ -13,9 +14,12 @@ export default function CategoryPage() {
   const [searchParams] = useSearchParams();
   const category = categories.find((c) => c.id === id);
   const [activeSubcat, setActiveSubcat] = useState<string | null>(null);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 300000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 500000]);
+  const [minInput, setMinInput] = useState("");
+  const [maxInput, setMaxInput] = useState("");
   const [inStockOnly, setInStockOnly] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<"name" | "price-asc" | "price-desc">("name");
 
   useEffect(() => {
     const sub = searchParams.get("sub");
@@ -30,14 +34,40 @@ export default function CategoryPage() {
 
   if (!category) return <div className="container mx-auto px-4 py-16 text-center">Категория не найдена</div>;
 
-  const filtered = products.filter((p) => {
-    if (activeSubcat && p.subcategory !== activeSubcat) return false;
-    if (p.price < priceRange[0] || p.price > priceRange[1]) return false;
-    if (inStockOnly && p.in_stock <= 0) return false;
-    return true;
-  });
+  const maxPrice = Math.max(...products.map((p) => p.price), 500000);
 
-  const maxPrice = Math.max(...products.map((p) => p.price), 300000);
+  const handleSliderChange = (v: number[]) => {
+    setPriceRange(v as [number, number]);
+    setMinInput(v[0].toString());
+    setMaxInput(v[1].toString());
+  };
+
+  const handleMinBlur = () => {
+    const val = parseInt(minInput) || 0;
+    const clamped = Math.max(0, Math.min(val, priceRange[1]));
+    setPriceRange([clamped, priceRange[1]]);
+    setMinInput(clamped.toString());
+  };
+
+  const handleMaxBlur = () => {
+    const val = parseInt(maxInput) || maxPrice;
+    const clamped = Math.max(priceRange[0], Math.min(val, maxPrice));
+    setPriceRange([priceRange[0], clamped]);
+    setMaxInput(clamped.toString());
+  };
+
+  const filtered = products
+    .filter((p) => {
+      if (activeSubcat && p.subcategory !== activeSubcat) return false;
+      if (p.price < priceRange[0] || p.price > priceRange[1]) return false;
+      if (inStockOnly && p.in_stock <= 0) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === "price-asc") return a.price - b.price;
+      if (sortBy === "price-desc") return b.price - a.price;
+      return a.name.localeCompare(b.name);
+    });
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB", maximumFractionDigits: 0 }).format(price);
@@ -67,9 +97,29 @@ export default function CategoryPage() {
 
       <div>
         <h3 className="text-sm font-semibold mb-3">Цена</h3>
+        <div className="flex gap-2 mb-3">
+          <Input
+            type="number"
+            placeholder="От"
+            value={minInput}
+            onChange={(e) => setMinInput(e.target.value)}
+            onBlur={handleMinBlur}
+            onKeyDown={(e) => e.key === "Enter" && handleMinBlur()}
+            className="h-8 text-xs"
+          />
+          <Input
+            type="number"
+            placeholder="До"
+            value={maxInput}
+            onChange={(e) => setMaxInput(e.target.value)}
+            onBlur={handleMaxBlur}
+            onKeyDown={(e) => e.key === "Enter" && handleMaxBlur()}
+            className="h-8 text-xs"
+          />
+        </div>
         <Slider
           value={priceRange}
-          onValueChange={(v) => setPriceRange(v as [number, number])}
+          onValueChange={handleSliderChange}
           min={0}
           max={maxPrice}
           step={1000}
@@ -79,6 +129,19 @@ export default function CategoryPage() {
           <span>{formatPrice(priceRange[0])}</span>
           <span>{formatPrice(priceRange[1])}</span>
         </div>
+      </div>
+
+      <div>
+        <h3 className="text-sm font-semibold mb-3">Сортировка</h3>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as any)}
+          className="w-full h-8 text-xs rounded-md border border-border bg-background px-2"
+        >
+          <option value="name">По названию</option>
+          <option value="price-asc">Сначала дешёвые</option>
+          <option value="price-desc">Сначала дорогие</option>
+        </select>
       </div>
 
       <div>
@@ -99,7 +162,6 @@ export default function CategoryPage() {
         </Button>
       </div>
 
-      {/* Mobile filters */}
       {filtersOpen && (
         <div className="lg:hidden glass-card rounded-xl p-4 mb-6 animate-slide-down">
           <div className="flex items-center justify-between mb-4">
@@ -111,7 +173,6 @@ export default function CategoryPage() {
       )}
 
       <div className="flex gap-8">
-        {/* Sidebar filters - desktop */}
         <aside className="hidden lg:block w-56 shrink-0">
           <div className="glass-card rounded-xl p-4 sticky top-20">
             <h2 className="font-semibold text-sm mb-4">Фильтры</h2>
@@ -119,7 +180,6 @@ export default function CategoryPage() {
           </div>
         </aside>
 
-        {/* Products */}
         <div className="flex-1">
           <p className="text-sm text-muted-foreground mb-4">Найдено: {filtered.length}</p>
           {filtered.length === 0 ? (

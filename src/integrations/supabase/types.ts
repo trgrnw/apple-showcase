@@ -296,6 +296,39 @@ export type Database = {
           },
         ]
       }
+      reviews: {
+        Row: {
+          author_name: string
+          created_at: string
+          id: string
+          order_id: string
+          product_id: string
+          rating: number
+          text: string
+          user_id: string
+        }
+        Insert: {
+          author_name?: string
+          created_at?: string
+          id?: string
+          order_id: string
+          product_id: string
+          rating: number
+          text?: string
+          user_id: string
+        }
+        Update: {
+          author_name?: string
+          created_at?: string
+          id?: string
+          order_id?: string
+          product_id?: string
+          rating?: number
+          text?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       supplies: {
         Row: {
           created_at: string
