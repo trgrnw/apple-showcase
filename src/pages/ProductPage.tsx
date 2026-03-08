@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   fetchProductById, fetchProductVariants, fetchProductReviews,
-  addFavorite, removeFavorite, createReview, checkUserCanReview,
+  addFavorite, removeFavorite, createReview, deleteReview,
   ProductVariant, Review,
 } from "@/lib/api";
 import { getImageForProduct } from "@/data/products";
@@ -261,11 +261,7 @@ export default function ProductPage() {
     enabled: !!id,
   });
 
-  const { data: canReviewData } = useQuery({
-    queryKey: ["can-review", id, user?.id],
-    queryFn: () => checkUserCanReview(user!.id, id!),
-    enabled: !!id && !!user,
-  });
+  // No longer need canReview check - any logged-in user can review
 
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [selectedStorage, setSelectedStorage] = useState<string>("");
@@ -321,26 +317,34 @@ export default function ProductPage() {
   };
 
   const handleSubmitReview = async () => {
-    if (!user || !product || !canReviewData?.orderId || !reviewText.trim()) return;
+    if (!user || !product || !reviewText.trim()) return;
     setSubmitting(true);
     try {
       const profile = await import("@/lib/api").then(m => m.fetchProfile(user.id));
       await createReview({
         product_id: product.id,
         user_id: user.id,
-        order_id: canReviewData.orderId,
         rating: reviewRating,
         text: reviewText.trim(),
-        author_name: profile?.display_name || user.email || "Покупатель",
+        author_name: profile?.display_name || user.email || "Пользователь",
       });
       toast.success("Отзыв отправлен!");
       setReviewText("");
       queryClient.invalidateQueries({ queryKey: ["product-reviews", id] });
-      queryClient.invalidateQueries({ queryKey: ["can-review", id, user.id] });
     } catch {
       toast.error("Ошибка при отправке отзыва");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    try {
+      await deleteReview(reviewId);
+      toast.success("Отзыв удалён");
+      queryClient.invalidateQueries({ queryKey: ["product-reviews", id] });
+    } catch {
+      toast.error("Ошибка при удалении");
     }
   };
 
@@ -547,19 +551,20 @@ export default function ProductPage() {
             <h2 className="text-2xl font-bold mb-6">Рекомендуемые аксессуары</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
-                { name: "Чехол MagSafe", desc: "Оригинальный силиконовый чехол с поддержкой MagSafe", price: "от 4 990 ₽", img: "cases" },
-                { name: "Зарядное устройство MagSafe", desc: "Беспроводная зарядка 15 Вт", price: "от 3 990 ₽", img: "charger" },
-                { name: "AirPods Pro", desc: "Наушники с активным шумоподавлением", price: "от 19 990 ₽", img: "airpods-pro" },
-                { name: "Защитное стекло", desc: "Керамическое стекло с олеофобным покрытием", price: "от 1 490 ₽", img: "accessories" },
+                { name: "Чехол MagSafe", desc: "Оригинальный силиконовый чехол с поддержкой MagSafe", price: "от 4 990 ₽", img: "cases", link: "/category/accessories" },
+                { name: "Зарядное устройство MagSafe", desc: "Беспроводная зарядка 15 Вт", price: "от 3 990 ₽", img: "charger", link: "/category/accessories" },
+                { name: "AirPods Pro", desc: "Наушники с активным шумоподавлением", price: "от 19 990 ₽", img: "airpods-pro", link: "/category/airpods" },
+                { name: "Защитное стекло", desc: "Керамическое стекло с олеофобным покрытием", price: "от 1 490 ₽", img: "accessories", link: "/category/accessories" },
               ].map((acc) => (
-                <div key={acc.name} className="glass-card rounded-xl p-4 flex gap-4 items-center">
+                <Link key={acc.name} to={acc.link} className="glass-card rounded-xl p-4 flex gap-4 items-center hover:ring-1 hover:ring-primary/50 transition-all">
                   <img src={getImageForProduct(acc.img)} alt={acc.name} className="w-16 h-16 rounded-lg object-cover" />
                   <div className="flex-1 min-w-0">
                     <h4 className="font-medium text-sm">{acc.name}</h4>
                     <p className="text-xs text-muted-foreground line-clamp-1">{acc.desc}</p>
                     <p className="text-sm font-semibold mt-1">{acc.price}</p>
                   </div>
-                </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                </Link>
               ))}
             </div>
           </motion.div>
@@ -570,8 +575,8 @@ export default function ProductPage() {
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl">
             <h2 className="text-2xl font-bold mb-6">Отзывы</h2>
 
-            {/* Write review form */}
-            {user && canReviewData?.canReview && (
+            {/* Write review form - any logged in user */}
+            {user && (
               <div className="glass-card rounded-xl p-5 mb-6 space-y-4">
                 <h3 className="font-semibold">Оставить отзыв</h3>
                 <div className="flex items-center gap-1">
@@ -582,7 +587,7 @@ export default function ProductPage() {
                   ))}
                 </div>
                 <Textarea
-                  placeholder="Расскажите о вашем опыте использования..."
+                  placeholder="Расскажите о вашем опыте..."
                   value={reviewText}
                   onChange={(e) => setReviewText(e.target.value)}
                   rows={3}
@@ -595,13 +600,7 @@ export default function ProductPage() {
 
             {!user && (
               <p className="text-sm text-muted-foreground mb-6">
-                <Link to="/auth" className="text-primary hover:underline">Войдите</Link>, чтобы оставить отзыв (доступно после покупки товара).
-              </p>
-            )}
-
-            {user && canReviewData && !canReviewData.canReview && (
-              <p className="text-sm text-muted-foreground mb-6">
-                Отзыв можно оставить после покупки данного товара.
+                <Link to="/auth" className="text-primary hover:underline">Войдите</Link>, чтобы оставить отзыв.
               </p>
             )}
 
@@ -620,9 +619,19 @@ export default function ProductPage() {
                           ))}
                         </div>
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(review.created_at).toLocaleDateString("ru-RU")}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(review.created_at).toLocaleDateString("ru-RU")}
+                        </span>
+                        {user && user.id === review.user_id && (
+                          <button
+                            onClick={() => handleDeleteReview(review.id)}
+                            className="text-xs text-destructive hover:underline"
+                          >
+                            Удалить
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <p className="text-sm text-muted-foreground">{review.text}</p>
                   </div>
