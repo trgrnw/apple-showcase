@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
-import { Package, Truck, ClipboardList, Plus } from "lucide-react";
+import { Package, Truck, ClipboardList, Plus, Filter } from "lucide-react";
 
 const statusLabels: Record<string, string> = {
   pending: "Ожидает",
