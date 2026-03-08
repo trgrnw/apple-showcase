@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
-import { Package, Truck, ClipboardList, Plus } from "lucide-react";
+import { Package, Truck, ClipboardList, Plus, Filter } from "lucide-react";
 
 const statusLabels: Record<string, string> = {
   pending: "Ожидает",
@@ -29,6 +29,18 @@ export default function AdminPage() {
   const { data: supplies = [] } = useQuery({ queryKey: ["supplies"], queryFn: fetchSupplies });
   const { data: products = [] } = useQuery({ queryKey: ["products"], queryFn: fetchProducts });
   const [supplyForm, setSupplyForm] = useState({ productId: "", quantity: "", supplier: "" });
+  const [orderFilter, setOrderFilter] = useState("all");
+  const [supplyFilter, setSupplyFilter] = useState("all");
+
+  const filteredOrders = useMemo(() => {
+    if (orderFilter === "all") return orders;
+    return orders.filter((o) => o.status === orderFilter);
+  }, [orders, orderFilter]);
+
+  const filteredSupplies = useMemo(() => {
+    if (supplyFilter === "all") return supplies;
+    return supplies.filter((s) => s.status === supplyFilter);
+  }, [supplies, supplyFilter]);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB", maximumFractionDigits: 0 }).format(price);
@@ -64,6 +76,9 @@ export default function AdminPage() {
     try {
       await updateSupplyStatus(id, status);
       qc.invalidateQueries({ queryKey: ["supplies"] });
+      if (status === "received") {
+        qc.invalidateQueries({ queryKey: ["products"] });
+      }
       toast.success(`Статус поставки: ${supplyStatusLabels[status]}`);
     } catch { toast.error("Ошибка обновления"); }
   };
@@ -80,10 +95,17 @@ export default function AdminPage() {
         </TabsList>
 
         <TabsContent value="orders" className="space-y-4">
-          {orders.length === 0 ? (
-            <p className="text-muted-foreground">Заказов пока нет</p>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {[{ key: "all", label: "Все" }, { key: "pending", label: "Ожидает" }, { key: "processing", label: "Обработка" }, { key: "shipped", label: "Отправлен" }, { key: "delivered", label: "Доставлено" }].map((f) => (
+              <Button key={f.key} size="sm" variant={orderFilter === f.key ? "default" : "outline"} onClick={() => setOrderFilter(f.key)}>
+                {f.label} {f.key === "all" ? `(${orders.length})` : `(${orders.filter(o => o.status === f.key).length})`}
+              </Button>
+            ))}
+          </div>
+          {filteredOrders.length === 0 ? (
+            <p className="text-muted-foreground">Заказов нет</p>
           ) : (
-            orders.map((order) => (
+            filteredOrders.map((order) => (
               <div key={order.id} className="glass-card rounded-xl p-4 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
@@ -135,10 +157,18 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {supplies.length === 0 ? (
-            <p className="text-muted-foreground">Поставок пока нет</p>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {[{ key: "all", label: "Все" }, { key: "ordered", label: "Заказано" }, { key: "in_transit", label: "В пути" }, { key: "received", label: "Получено" }].map((f) => (
+              <Button key={f.key} size="sm" variant={supplyFilter === f.key ? "default" : "outline"} onClick={() => setSupplyFilter(f.key)}>
+                {f.label} {f.key === "all" ? `(${supplies.length})` : `(${supplies.filter(s => s.status === f.key).length})`}
+              </Button>
+            ))}
+          </div>
+
+          {filteredSupplies.length === 0 ? (
+            <p className="text-muted-foreground">Поставок нет</p>
           ) : (
-            supplies.map((supply) => (
+            filteredSupplies.map((supply) => (
               <div key={supply.id} className="glass-card rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
                 <div className="space-y-1">
                   <p className="font-medium text-sm">{supply.product_name}</p>
