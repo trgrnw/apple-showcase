@@ -216,7 +216,7 @@ export function Header() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-14 bottom-0 z-40 border-t bg-background/95 backdrop-blur-xl overflow-y-auto overscroll-contain touch-auto">
+        <div className="lg:hidden fixed inset-x-0 top-14 bottom-0 z-[60] border-t bg-background backdrop-blur-xl overflow-y-auto overscroll-contain touch-auto">
           <div className="p-4 space-y-2">
           {/* Mobile search */}
           <input
