@@ -1,12 +1,15 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart, Sun, Moon, Menu, X, Search, Shield } from "lucide-react";
+import { ShoppingCart, Sun, Moon, Menu, X, Search, Shield, LogOut } from "lucide-react";
 import { useStore } from "@/store/useStore";
+import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { categories } from "@/data/products";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export function Header() {
   const { cart, theme, toggleTheme } = useStore();
+  const { user, isAdmin, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0);
 
@@ -19,11 +22,7 @@ export function Header() {
 
         <nav className="hidden md:flex items-center gap-6">
           {categories.map((c) => (
-            <Link
-              key={c.id}
-              to={`/category/${c.id}`}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
+            <Link key={c.id} to={`/category/${c.id}`} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               {c.name}
             </Link>
           ))}
@@ -44,13 +43,23 @@ export function Header() {
               </Badge>
             )}
           </Link>
-          <Link to="/admin" className="text-muted-foreground hover:text-foreground transition-colors hidden md:block">
-            <Shield className="h-5 w-5" />
-          </Link>
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="md:hidden text-muted-foreground"
-          >
+
+          {user && isAdmin ? (
+            <div className="hidden md:flex items-center gap-2">
+              <Link to="/admin" className="text-primary hover:text-primary/80 transition-colors">
+                <Shield className="h-5 w-5" />
+              </Link>
+              <button onClick={signOut} className="text-muted-foreground hover:text-foreground transition-colors">
+                <LogOut className="h-5 w-5" />
+              </button>
+            </div>
+          ) : (
+            <Link to="/login" className="text-muted-foreground hover:text-foreground transition-colors hidden md:block">
+              <Shield className="h-5 w-5" />
+            </Link>
+          )}
+
+          <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden text-muted-foreground">
             {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
@@ -59,18 +68,18 @@ export function Header() {
       {menuOpen && (
         <div className="md:hidden border-t bg-background p-4 space-y-3">
           {categories.map((c) => (
-            <Link
-              key={c.id}
-              to={`/category/${c.id}`}
-              onClick={() => setMenuOpen(false)}
-              className="block text-sm text-muted-foreground hover:text-foreground"
-            >
+            <Link key={c.id} to={`/category/${c.id}`} onClick={() => setMenuOpen(false)} className="block text-sm text-muted-foreground hover:text-foreground">
               {c.name}
             </Link>
           ))}
-          <Link to="/admin" onClick={() => setMenuOpen(false)} className="block text-sm text-muted-foreground hover:text-foreground">
-            Админ-панель
-          </Link>
+          {user && isAdmin ? (
+            <>
+              <Link to="/admin" onClick={() => setMenuOpen(false)} className="block text-sm text-primary">Админ-панель</Link>
+              <button onClick={() => { signOut(); setMenuOpen(false); }} className="block text-sm text-muted-foreground hover:text-foreground">Выйти</button>
+            </>
+          ) : (
+            <Link to="/login" onClick={() => setMenuOpen(false)} className="block text-sm text-muted-foreground hover:text-foreground">Вход для админа</Link>
+          )}
         </div>
       )}
     </header>
