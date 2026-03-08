@@ -575,8 +575,8 @@ export default function ProductPage() {
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl">
             <h2 className="text-2xl font-bold mb-6">Отзывы</h2>
 
-            {/* Write review form */}
-            {user && canReviewData?.canReview && (
+            {/* Write review form - any logged in user */}
+            {user && (
               <div className="glass-card rounded-xl p-5 mb-6 space-y-4">
                 <h3 className="font-semibold">Оставить отзыв</h3>
                 <div className="flex items-center gap-1">
@@ -587,7 +587,7 @@ export default function ProductPage() {
                   ))}
                 </div>
                 <Textarea
-                  placeholder="Расскажите о вашем опыте использования..."
+                  placeholder="Расскажите о вашем опыте..."
                   value={reviewText}
                   onChange={(e) => setReviewText(e.target.value)}
                   rows={3}
@@ -600,13 +600,7 @@ export default function ProductPage() {
 
             {!user && (
               <p className="text-sm text-muted-foreground mb-6">
-                <Link to="/auth" className="text-primary hover:underline">Войдите</Link>, чтобы оставить отзыв (доступно после покупки товара).
-              </p>
-            )}
-
-            {user && canReviewData && !canReviewData.canReview && (
-              <p className="text-sm text-muted-foreground mb-6">
-                Отзыв можно оставить после покупки данного товара.
+                <Link to="/auth" className="text-primary hover:underline">Войдите</Link>, чтобы оставить отзыв.
               </p>
             )}
 
@@ -625,9 +619,19 @@ export default function ProductPage() {
                           ))}
                         </div>
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(review.created_at).toLocaleDateString("ru-RU")}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(review.created_at).toLocaleDateString("ru-RU")}
+                        </span>
+                        {user && user.id === review.user_id && (
+                          <button
+                            onClick={() => handleDeleteReview(review.id)}
+                            className="text-xs text-destructive hover:underline"
+                          >
+                            Удалить
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <p className="text-sm text-muted-foreground">{review.text}</p>
                   </div>
