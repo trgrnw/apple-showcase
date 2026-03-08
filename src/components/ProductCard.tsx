@@ -1,12 +1,13 @@
 import { Link } from "react-router-dom";
-import { Product } from "@/data/products";
+import { DbProduct } from "@/lib/api";
+import { getImageForProduct } from "@/data/products";
 import { useStore } from "@/store/useStore";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
 interface ProductCardProps {
-  product: Product;
+  product: DbProduct;
   index?: number;
 }
 
@@ -26,7 +27,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
       <Link to={`/product/${product.id}`}>
         <div className="aspect-square overflow-hidden bg-secondary/50">
           <img
-            src={product.image}
+            src={getImageForProduct(product.image_key)}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />

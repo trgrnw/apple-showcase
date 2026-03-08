@@ -1,5 +1,7 @@
 import { useParams } from "react-router-dom";
-import { categories, getProductsByCategory, getProductsBySubcategory } from "@/data/products";
+import { useQuery } from "@tanstack/react-query";
+import { categories } from "@/data/products";
+import { fetchProductsByCategory, fetchProductsBySubcategory } from "@/lib/api";
 import { ProductCard } from "@/components/ProductCard";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -9,36 +11,35 @@ export default function CategoryPage() {
   const category = categories.find((c) => c.id === id);
   const [activeSubcat, setActiveSubcat] = useState<string | null>(null);
 
+  const { data: allProducts = [] } = useQuery({
+    queryKey: ["products", "category", id],
+    queryFn: () => fetchProductsByCategory(id!),
+    enabled: !!id && !activeSubcat,
+  });
+
+  const { data: subcatProducts = [] } = useQuery({
+    queryKey: ["products", "category", id, "subcategory", activeSubcat],
+    queryFn: () => fetchProductsBySubcategory(id!, activeSubcat!),
+    enabled: !!id && !!activeSubcat,
+  });
+
   if (!category) return <div className="container mx-auto px-4 py-16 text-center">Категория не найдена</div>;
 
-  const items = activeSubcat
-    ? getProductsBySubcategory(category.id, activeSubcat)
-    : getProductsByCategory(category.id);
+  const items = activeSubcat ? subcatProducts : allProducts;
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-4xl font-bold mb-2">{category.name}</h1>
-
       <div className="flex flex-wrap gap-2 mb-8">
-        <Button
-          variant={activeSubcat === null ? "default" : "outline"}
-          size="sm"
-          onClick={() => setActiveSubcat(null)}
-        >
+        <Button variant={activeSubcat === null ? "default" : "outline"} size="sm" onClick={() => setActiveSubcat(null)}>
           Все
         </Button>
         {category.subcategories.map((sub) => (
-          <Button
-            key={sub}
-            variant={activeSubcat === sub ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveSubcat(sub)}
-          >
+          <Button key={sub} variant={activeSubcat === sub ? "default" : "outline"} size="sm" onClick={() => setActiveSubcat(sub)}>
             {sub}
           </Button>
         ))}
       </div>
-
       {items.length === 0 ? (
         <p className="text-muted-foreground">Товары в этой подкатегории скоро появятся.</p>
       ) : (

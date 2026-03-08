@@ -1,4 +1,6 @@
 import { useStore } from "@/store/useStore";
+import { getImageForProduct } from "@/data/products";
+import { createOrder } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Minus, Plus, Trash2 } from "lucide-react";
@@ -7,21 +9,35 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 export default function CartPage() {
-  const { cart, removeFromCart, updateQuantity, placeOrder, getCartTotal } = useStore();
+  const { cart, removeFromCart, updateQuantity, clearCart, getCartTotal } = useStore();
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", phone: "", email: "", address: "" });
+  const [loading, setLoading] = useState(false);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB", maximumFractionDigits: 0 }).format(price);
 
-  const handleOrder = () => {
+  const handleOrder = async () => {
     if (!form.name || !form.phone || !form.address) {
       toast.error("Заполните обязательные поля: имя, телефон, адрес");
       return;
     }
-    const trackingCode = placeOrder(form);
-    toast.success(`Заказ оформлен! Код отслеживания: ${trackingCode}`);
-    navigate(`/track?code=${trackingCode}`);
+    setLoading(true);
+    try {
+      const trackingCode = await createOrder(
+        cart.map((i) => ({ productId: i.product.id, quantity: i.quantity, price: i.product.price })),
+        form,
+        getCartTotal()
+      );
+      clearCart();
+      toast.success(`Заказ оформлен! Код: ${trackingCode}`);
+      navigate(`/track?code=${trackingCode}`);
+    } catch (err) {
+      toast.error("Ошибка при оформлении заказа");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (cart.length === 0) {
@@ -37,12 +53,11 @@ export default function CartPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Корзина</h1>
-
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-4">
           {cart.map((item) => (
             <div key={item.product.id} className="glass-card rounded-xl p-4 flex gap-4">
-              <img src={item.product.image} alt={item.product.name} className="w-20 h-20 rounded-lg object-cover" />
+              <img src={getImageForProduct(item.product.image_key)} alt={item.product.name} className="w-20 h-20 rounded-lg object-cover" />
               <div className="flex-1 min-w-0">
                 <h3 className="font-medium text-sm truncate">{item.product.name}</h3>
                 <p className="text-lg font-semibold mt-1">{formatPrice(item.product.price)}</p>
@@ -85,8 +100,8 @@ export default function CartPage() {
             </div>
           </div>
 
-          <Button className="w-full" size="lg" onClick={handleOrder}>
-            Оформить заказ
+          <Button className="w-full" size="lg" onClick={handleOrder} disabled={loading}>
+            {loading ? "Оформляем..." : "Оформить заказ"}
           </Button>
         </div>
       </div>
