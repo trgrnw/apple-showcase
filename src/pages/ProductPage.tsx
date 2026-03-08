@@ -261,11 +261,7 @@ export default function ProductPage() {
     enabled: !!id,
   });
 
-  const { data: canReviewData } = useQuery({
-    queryKey: ["can-review", id, user?.id],
-    queryFn: () => checkUserCanReview(user!.id, id!),
-    enabled: !!id && !!user,
-  });
+  // No longer need canReview check - any logged-in user can review
 
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [selectedStorage, setSelectedStorage] = useState<string>("");
