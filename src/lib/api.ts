@@ -16,6 +16,17 @@ export interface ProductVariant {
   image_key: string;
 }
 
+export interface Review {
+  id: string;
+  product_id: string;
+  user_id: string;
+  order_id: string;
+  rating: number;
+  text: string;
+  author_name: string;
+  created_at: string;
+}
+
 // Products
 export async function fetchProducts() {
   const { data, error } = await supabase.from("products").select("*").order("name");
@@ -78,6 +89,12 @@ export async function fetchOrderByPhoneAndCode(phone: string, trackingCode: stri
 
 export async function fetchOrderItems(orderId: string) {
   const { data, error } = await supabase.from("order_items").select("*, products(*)").eq("order_id", orderId);
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchUserOrders(email: string) {
+  const { data, error } = await supabase.from("orders").select("*").eq("customer_email", email).order("created_at", { ascending: false });
   if (error) throw error;
   return data;
 }
@@ -192,4 +209,58 @@ export async function fetchProfile(userId: string) {
 export async function updateProfile(userId: string, updates: { display_name?: string; phone?: string }) {
   const { error } = await supabase.from("profiles").update(updates).eq("id", userId);
   if (error) throw error;
+}
+
+// Reviews
+export async function fetchProductReviews(productId: string): Promise<Review[]> {
+  const { data, error } = await supabase
+    .from("reviews")
+    .select("*")
+    .eq("product_id", productId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data || []) as unknown as Review[];
+}
+
+export async function createReview(review: {
+  product_id: string;
+  user_id: string;
+  order_id: string;
+  rating: number;
+  text: string;
+  author_name: string;
+}) {
+  const { error } = await supabase.from("reviews").insert(review);
+  if (error) throw error;
+}
+
+export async function checkUserCanReview(userId: string, productId: string): Promise<{ canReview: boolean; orderId: string | null }> {
+  // Check if user has ordered this product
+  const { data: orderItems, error } = await supabase
+    .from("order_items")
+    .select("order_id, orders!order_items_order_id_fkey(customer_email)")
+    .eq("product_id", productId);
+  if (error) return { canReview: false, orderId: null };
+
+  // Get user email
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.email) return { canReview: false, orderId: null };
+
+  const matchingItem = (orderItems || []).find((item: any) =>
+    item.orders?.customer_email === user.email
+  );
+
+  if (!matchingItem) return { canReview: false, orderId: null };
+
+  // Check if already reviewed
+  const { data: existingReview } = await supabase
+    .from("reviews")
+    .select("id")
+    .eq("product_id", productId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (existingReview) return { canReview: false, orderId: null };
+
+  return { canReview: true, orderId: matchingItem.order_id };
 }
