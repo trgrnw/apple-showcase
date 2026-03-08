@@ -29,6 +29,18 @@ export default function AdminPage() {
   const { data: supplies = [] } = useQuery({ queryKey: ["supplies"], queryFn: fetchSupplies });
   const { data: products = [] } = useQuery({ queryKey: ["products"], queryFn: fetchProducts });
   const [supplyForm, setSupplyForm] = useState({ productId: "", quantity: "", supplier: "" });
+  const [orderFilter, setOrderFilter] = useState("all");
+  const [supplyFilter, setSupplyFilter] = useState("all");
+
+  const filteredOrders = useMemo(() => {
+    if (orderFilter === "all") return orders;
+    return orders.filter((o) => o.status === orderFilter);
+  }, [orders, orderFilter]);
+
+  const filteredSupplies = useMemo(() => {
+    if (supplyFilter === "all") return supplies;
+    return supplies.filter((s) => s.status === supplyFilter);
+  }, [supplies, supplyFilter]);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB", maximumFractionDigits: 0 }).format(price);
