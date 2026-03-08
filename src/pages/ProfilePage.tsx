@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useStore } from "@/store/useStore";
 import { useQuery } from "@tanstack/react-query";
-import { fetchFavorites, fetchProfile, updateProfile, fetchOrderByPhoneAndCode } from "@/lib/api";
+import { fetchFavorites, fetchProfile, updateProfile, fetchOrderByPhoneAndCode, fetchUserOrdersByEmail } from "@/lib/api";
 import { getImageForProduct } from "@/data/products";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,12 @@ export default function ProfilePage() {
     enabled: !!user,
   });
 
+  const { data: userOrders = [] } = useQuery({
+    queryKey: ["user-orders", user?.email],
+    queryFn: () => fetchUserOrdersByEmail(user!.email!),
+    enabled: !!user?.email,
+  });
+
   if (loading) return <div className="container mx-auto px-4 py-16 text-center text-muted-foreground">Загрузка...</div>;
   if (!user) return <Navigate to="/auth" />;
 
@@ -66,6 +72,14 @@ export default function ProfilePage() {
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB", maximumFractionDigits: 0 }).format(price);
+
+  const statusLabels: Record<string, string> = {
+    pending: "Ожидает",
+    processing: "В обработке",
+    shipped: "Отправлен",
+    delivered: "Доставлен",
+    cancelled: "Отменён",
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -137,12 +151,12 @@ export default function ProfilePage() {
         </TabsContent>
 
         <TabsContent value="orders" className="space-y-6">
+          {/* Search order */}
           <div className="glass-card rounded-xl p-6 space-y-4">
-            <h2 className="font-semibold flex items-center gap-2"><Search className="h-4 w-4" /> Отследить заказ</h2>
-            <p className="text-sm text-muted-foreground">Введите номер телефона и код заказа</p>
+            <h2 className="font-semibold flex items-center gap-2"><Search className="h-4 w-4" /> Найти заказ</h2>
             <div className="grid sm:grid-cols-3 gap-3">
-              <Input placeholder="Номер телефона *" value={trackPhone} onChange={(e) => setTrackPhone(e.target.value)} />
-              <Input placeholder="Код заказа (DBR-XXXX) *" value={trackCode} onChange={(e) => setTrackCode(e.target.value)} />
+              <Input placeholder="Номер телефона" value={trackPhone} onChange={(e) => setTrackPhone(e.target.value)} />
+              <Input placeholder="Код заказа (DBR-XXXX)" value={trackCode} onChange={(e) => setTrackCode(e.target.value)} />
               <Button onClick={handleTrackOrder} disabled={trackLoading}>
                 {trackLoading ? "Поиск..." : "Найти"}
               </Button>
@@ -152,16 +166,37 @@ export default function ProfilePage() {
               <div className="border-t pt-4 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-sm">{trackResult.tracking_code}</span>
-                  <span className="text-sm capitalize bg-accent px-2 py-0.5 rounded">{trackResult.status}</span>
+                  <span className="text-sm capitalize bg-accent px-2 py-0.5 rounded">{statusLabels[trackResult.status] || trackResult.status}</span>
                 </div>
                 <p className="text-sm text-muted-foreground">Сумма: {formatPrice(trackResult.total)}</p>
                 <p className="text-sm text-muted-foreground">Адрес: {trackResult.address}</p>
                 <p className="text-sm text-muted-foreground">Дата: {new Date(trackResult.created_at).toLocaleDateString("ru-RU")}</p>
               </div>
             )}
+          </div>
 
-            {trackResult === null && trackCode && !trackLoading && (
-              <p className="text-sm text-destructive">Заказ не найден. Проверьте номер телефона и код.</p>
+          {/* All user orders */}
+          <div className="space-y-3">
+            <h2 className="font-semibold">История заказов</h2>
+            {userOrders.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Package className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                <p>У вас пока нет заказов</p>
+              </div>
+            ) : (
+              userOrders.map((order: any) => (
+                <div key={order.id} className="glass-card rounded-xl p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-sm font-medium">{order.tracking_code}</span>
+                    <span className="text-xs bg-accent px-2 py-0.5 rounded">{statusLabels[order.status] || order.status}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>{new Date(order.created_at).toLocaleDateString("ru-RU")}</span>
+                    <span className="font-semibold text-foreground">{formatPrice(order.total)}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate">{order.address}</p>
+                </div>
+              ))
             )}
           </div>
         </TabsContent>
