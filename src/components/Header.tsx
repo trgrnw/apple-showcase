@@ -193,7 +193,8 @@ export function Header() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="lg:hidden border-t bg-background/95 backdrop-blur-xl p-4 space-y-2 animate-slide-down">
+        <div className="lg:hidden fixed inset-x-0 top-14 bottom-0 z-40 border-t bg-background/95 backdrop-blur-xl overflow-y-auto overscroll-contain touch-auto">
+          <div className="p-4 space-y-2">
           {/* Mobile search */}
           <input
             type="text"
