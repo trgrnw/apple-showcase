@@ -154,10 +154,18 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {supplies.length === 0 ? (
-            <p className="text-muted-foreground">Поставок пока нет</p>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {[{ key: "all", label: "Все" }, { key: "ordered", label: "Заказано" }, { key: "in_transit", label: "В пути" }, { key: "received", label: "Получено" }].map((f) => (
+              <Button key={f.key} size="sm" variant={supplyFilter === f.key ? "default" : "outline"} onClick={() => setSupplyFilter(f.key)}>
+                {f.label} {f.key === "all" ? `(${supplies.length})` : `(${supplies.filter(s => s.status === f.key).length})`}
+              </Button>
+            ))}
+          </div>
+
+          {filteredSupplies.length === 0 ? (
+            <p className="text-muted-foreground">Поставок нет</p>
           ) : (
-            supplies.map((supply) => (
+            filteredSupplies.map((supply) => (
               <div key={supply.id} className="glass-card rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
                 <div className="space-y-1">
                   <p className="font-medium text-sm">{supply.product_name}</p>
