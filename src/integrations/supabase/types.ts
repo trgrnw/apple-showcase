@@ -301,7 +301,7 @@ export type Database = {
           author_name: string
           created_at: string
           id: string
-          order_id: string
+          order_id: string | null
           product_id: string
           rating: number
           text: string
@@ -311,7 +311,7 @@ export type Database = {
           author_name?: string
           created_at?: string
           id?: string
-          order_id: string
+          order_id?: string | null
           product_id: string
           rating: number
           text?: string
@@ -321,7 +321,7 @@ export type Database = {
           author_name?: string
           created_at?: string
           id?: string
-          order_id?: string
+          order_id?: string | null
           product_id?: string
           rating?: number
           text?: string
