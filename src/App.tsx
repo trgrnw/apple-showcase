@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { AuthProvider } from "@/hooks/useAuth";
 import { AdminGuard } from "@/components/AdminGuard";
 import { useStore } from "@/store/useStore";
@@ -14,6 +15,11 @@ import ProductPage from "./pages/ProductPage";
 import CartPage from "./pages/CartPage";
 import TrackOrderPage from "./pages/TrackOrderPage";
 import AdminPage from "./pages/AdminPage";
+import AuthPage from "./pages/AuthPage";
+import ProfilePage from "./pages/ProfilePage";
+import FAQPage from "./pages/FAQPage";
+import BlogPage from "./pages/BlogPage";
+import BlogPostPage from "./pages/BlogPostPage";
 import LoginPage from "./pages/LoginPage";
 import NotFound from "./pages/NotFound";
 
@@ -35,17 +41,27 @@ const App = () => (
       <ThemeProvider>
         <AuthProvider>
           <BrowserRouter>
-            <Header />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/category/:id" element={<CategoryPage />} />
-              <Route path="/product/:id" element={<ProductPage />} />
-              <Route path="/cart" element={<CartPage />} />
-              <Route path="/track" element={<TrackOrderPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/admin" element={<AdminGuard><AdminPage /></AdminGuard>} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <div className="flex flex-col min-h-screen">
+              <Header />
+              <main className="flex-1">
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/category/:id" element={<CategoryPage />} />
+                  <Route path="/product/:id" element={<ProductPage />} />
+                  <Route path="/cart" element={<CartPage />} />
+                  <Route path="/track" element={<TrackOrderPage />} />
+                  <Route path="/auth" element={<AuthPage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/faq" element={<FAQPage />} />
+                  <Route path="/blog" element={<BlogPage />} />
+                  <Route path="/blog/:slug" element={<BlogPostPage />} />
+                  <Route path="/admin" element={<AdminGuard><AdminPage /></AdminGuard>} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </main>
+              <Footer />
+            </div>
           </BrowserRouter>
         </AuthProvider>
       </ThemeProvider>

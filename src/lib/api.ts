@@ -31,6 +31,12 @@ export async function fetchProductById(id: string) {
   return data;
 }
 
+export async function searchProducts(query: string) {
+  const { data, error } = await supabase.from("products").select("*").or(`name.ilike.%${query}%,description.ilike.%${query}%`).order("name").limit(20);
+  if (error) throw error;
+  return data;
+}
+
 // Orders
 export async function fetchOrders() {
   const { data, error } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
@@ -40,6 +46,12 @@ export async function fetchOrders() {
 
 export async function fetchOrderByTrackingCode(trackingCode: string) {
   const { data, error } = await supabase.from("orders").select("*").eq("tracking_code", trackingCode).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchOrderByPhoneAndCode(phone: string, trackingCode: string) {
+  const { data, error } = await supabase.from("orders").select("*").eq("tracking_code", trackingCode).eq("customer_phone", phone).maybeSingle();
   if (error) throw error;
   return data;
 }
@@ -58,7 +70,7 @@ export async function createOrder(
   total: number
 ) {
   const id = generateId();
-  const trackingCode = `APL-${generateId()}`;
+  const trackingCode = `DBR-${generateId()}`;
 
   const { error: orderErr } = await supabase.from("orders").insert({
     id,
@@ -104,5 +116,60 @@ export async function createSupply(supply: { product_id: string; product_name: s
 
 export async function updateSupplyStatus(id: string, status: string) {
   const { error } = await supabase.from("supplies").update({ status }).eq("id", id);
+  if (error) throw error;
+}
+
+// Favorites
+export async function fetchFavorites(userId: string) {
+  const { data, error } = await supabase.from("favorites").select("*, products(*)").eq("user_id", userId);
+  if (error) throw error;
+  return data;
+}
+
+export async function addFavorite(userId: string, productId: string) {
+  const { error } = await supabase.from("favorites").insert({ user_id: userId, product_id: productId });
+  if (error && error.code !== "23505") throw error; // ignore duplicate
+}
+
+export async function removeFavorite(userId: string, productId: string) {
+  const { error } = await supabase.from("favorites").delete().eq("user_id", userId).eq("product_id", productId);
+  if (error) throw error;
+}
+
+export async function fetchUserFavoriteIds(userId: string) {
+  const { data, error } = await supabase.from("favorites").select("product_id").eq("user_id", userId);
+  if (error) throw error;
+  return (data || []).map((f: any) => f.product_id);
+}
+
+// Blog
+export async function fetchBlogPosts() {
+  const { data, error } = await supabase.from("blog_posts").select("*").eq("published", true).order("created_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchBlogPost(slug: string) {
+  const { data, error } = await supabase.from("blog_posts").select("*").eq("slug", slug).eq("published", true).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+// Promotions
+export async function fetchPromotions() {
+  const { data, error } = await supabase.from("promotions").select("*").eq("active", true);
+  if (error) throw error;
+  return data;
+}
+
+// Profile
+export async function fetchProfile(userId: string) {
+  const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateProfile(userId: string, updates: { display_name?: string; phone?: string }) {
+  const { error } = await supabase.from("profiles").update(updates).eq("id", userId);
   if (error) throw error;
 }
