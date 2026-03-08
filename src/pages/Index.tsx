@@ -1,5 +1,8 @@
 import { Link } from "react-router-dom";
-import { categories, products } from "@/data/products";
+import { useQuery } from "@tanstack/react-query";
+import { categories } from "@/data/products";
+import { getImageForProduct } from "@/data/products";
+import { fetchProducts } from "@/lib/api";
 import { ProductCard } from "@/components/ProductCard";
 import heroBanner from "@/assets/hero-banner.jpg";
 import { motion } from "framer-motion";
@@ -7,17 +10,18 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
+  const { data: products = [] } = useQuery({
+    queryKey: ["products"],
+    queryFn: fetchProducts,
+  });
+
   const featured = products.slice(0, 6);
 
   return (
     <div className="min-h-screen">
       {/* Hero */}
       <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">
-        <img
-          src={heroBanner}
-          alt="Apple Products"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+        <img src={heroBanner} alt="Apple Products" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -47,22 +51,10 @@ const Index = () => {
         <h2 className="text-3xl font-bold mb-8">Категории</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {categories.map((cat, i) => (
-            <motion.div
-              key={cat.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-            >
-              <Link
-                to={`/category/${cat.id}`}
-                className="glass-card rounded-xl overflow-hidden block hover-lift group"
-              >
+            <motion.div key={cat.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
+              <Link to={`/category/${cat.id}`} className="glass-card rounded-xl overflow-hidden block hover-lift group">
                 <div className="aspect-square overflow-hidden">
-                  <img
-                    src={cat.image}
-                    alt={cat.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
+                  <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 </div>
                 <div className="p-3 text-center">
                   <span className="text-sm font-medium">{cat.name}</span>
