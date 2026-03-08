@@ -12,11 +12,15 @@ export interface CartItem {
 interface StoreState {
   cart: CartItem[];
   theme: "light" | "dark";
+  favoriteIds: string[];
   addToCart: (product: DbProduct) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
+  setTheme: (theme: "light" | "dark") => void;
   toggleTheme: () => void;
+  setFavoriteIds: (ids: string[]) => void;
+  toggleFavoriteLocal: (id: string) => void;
   getCartTotal: () => number;
 }
 
@@ -25,6 +29,7 @@ export const useStore = create<StoreState>()(
     (set, get) => ({
       cart: [],
       theme: "dark",
+      favoriteIds: [],
 
       addToCart: (product) =>
         set((state) => {
@@ -53,14 +58,23 @@ export const useStore = create<StoreState>()(
 
       clearCart: () => set({ cart: [] }),
 
+      setTheme: (theme) => set({ theme }),
       toggleTheme: () =>
         set((state) => ({ theme: state.theme === "dark" ? "light" : "dark" })),
+
+      setFavoriteIds: (ids) => set({ favoriteIds: ids }),
+      toggleFavoriteLocal: (id) =>
+        set((state) => ({
+          favoriteIds: state.favoriteIds.includes(id)
+            ? state.favoriteIds.filter((fid) => fid !== id)
+            : [...state.favoriteIds, id],
+        })),
 
       getCartTotal: () => {
         const state = get();
         return state.cart.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
       },
     }),
-    { name: "apple-store" }
+    { name: "debry-store" }
   )
 );
