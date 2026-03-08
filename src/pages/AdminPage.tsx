@@ -92,10 +92,17 @@ export default function AdminPage() {
         </TabsList>
 
         <TabsContent value="orders" className="space-y-4">
-          {orders.length === 0 ? (
-            <p className="text-muted-foreground">Заказов пока нет</p>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {[{ key: "all", label: "Все" }, { key: "pending", label: "Ожидает" }, { key: "processing", label: "Обработка" }, { key: "shipped", label: "Отправлен" }, { key: "delivered", label: "Доставлено" }].map((f) => (
+              <Button key={f.key} size="sm" variant={orderFilter === f.key ? "default" : "outline"} onClick={() => setOrderFilter(f.key)}>
+                {f.label} {f.key === "all" ? `(${orders.length})` : `(${orders.filter(o => o.status === f.key).length})`}
+              </Button>
+            ))}
+          </div>
+          {filteredOrders.length === 0 ? (
+            <p className="text-muted-foreground">Заказов нет</p>
           ) : (
-            orders.map((order) => (
+            filteredOrders.map((order) => (
               <div key={order.id} className="glass-card rounded-xl p-4 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
