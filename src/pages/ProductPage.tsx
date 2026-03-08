@@ -317,26 +317,34 @@ export default function ProductPage() {
   };
 
   const handleSubmitReview = async () => {
-    if (!user || !product || !canReviewData?.orderId || !reviewText.trim()) return;
+    if (!user || !product || !reviewText.trim()) return;
     setSubmitting(true);
     try {
       const profile = await import("@/lib/api").then(m => m.fetchProfile(user.id));
       await createReview({
         product_id: product.id,
         user_id: user.id,
-        order_id: canReviewData.orderId,
         rating: reviewRating,
         text: reviewText.trim(),
-        author_name: profile?.display_name || user.email || "Покупатель",
+        author_name: profile?.display_name || user.email || "Пользователь",
       });
       toast.success("Отзыв отправлен!");
       setReviewText("");
       queryClient.invalidateQueries({ queryKey: ["product-reviews", id] });
-      queryClient.invalidateQueries({ queryKey: ["can-review", id, user.id] });
     } catch {
       toast.error("Ошибка при отправке отзыва");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    try {
+      await deleteReview(reviewId);
+      toast.success("Отзыв удалён");
+      queryClient.invalidateQueries({ queryKey: ["product-reviews", id] });
+    } catch {
+      toast.error("Ошибка при удалении");
     }
   };
 
