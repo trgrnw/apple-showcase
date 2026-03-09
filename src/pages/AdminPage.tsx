@@ -123,16 +123,20 @@ export default function AdminPage() {
                   <p><span className="text-muted-foreground">Сумма:</span> {formatPrice(order.total)}</p>
                 </div>
                 <div className="flex gap-2 pt-2">
-                  {["pending", "processing", "shipped", "delivered"].map((s) => (
-                    <Button
-                      key={s}
-                      size="sm"
-                      variant={order.status === s ? "default" : "outline"}
-                      onClick={() => handleStatusChange(order.id, s)}
-                    >
-                      {statusLabels[s]}
-                    </Button>
-                  ))}
+                  {order.status === "delivered" ? (
+                    <Badge variant="default">✓ Доставлен (финальный)</Badge>
+                  ) : (
+                    ["pending", "processing", "shipped", "delivered"].map((s) => (
+                      <Button
+                        key={s}
+                        size="sm"
+                        variant={order.status === s ? "default" : "outline"}
+                        onClick={() => handleStatusChange(order.id, s)}
+                      >
+                        {statusLabels[s]}
+                      </Button>
+                    ))
+                  )}
                 </div>
               </div>
             ))
@@ -175,16 +179,20 @@ export default function AdminPage() {
                   <p className="text-xs text-muted-foreground">Кол-во: {supply.quantity} • Поставщик: {supply.supplier} • {new Date(supply.created_at).toLocaleDateString("ru-RU")}</p>
                 </div>
                 <div className="flex gap-2">
-                  {["ordered", "in_transit", "received"].map((s) => (
-                    <Button
-                      key={s}
-                      size="sm"
-                      variant={supply.status === s ? "default" : "outline"}
-                      onClick={() => handleSupplyStatus(supply.id, s)}
-                    >
-                      {supplyStatusLabels[s]}
-                    </Button>
-                  ))}
+                  {supply.status === "received" ? (
+                    <Badge variant="default">✓ Получено (финальный)</Badge>
+                  ) : (
+                    ["ordered", "in_transit", "received"].map((s) => (
+                      <Button
+                        key={s}
+                        size="sm"
+                        variant={supply.status === s ? "default" : "outline"}
+                        onClick={() => handleSupplyStatus(supply.id, s)}
+                      >
+                        {supplyStatusLabels[s]}
+                      </Button>
+                    ))
+                  )}
                 </div>
               </div>
             ))
