@@ -77,29 +77,35 @@ export default function CategoryPage() {
   const handleMinBlur = () => {
     const val = parseInt(minInput) || 0;
     const clamped = Math.max(0, Math.min(val, priceRange[1]));
-    setPriceRange([clamped, priceRange[1]]);
+    const next: [number, number] = [clamped, priceRange[1]];
+    setPriceRange(next);
+    setPriceRangeDraft(next);
     setMinInput(clamped.toString());
   };
 
   const handleMaxBlur = () => {
     const val = parseInt(maxInput) || maxPrice;
     const clamped = Math.max(priceRange[0], Math.min(val, maxPrice));
-    setPriceRange([priceRange[0], clamped]);
+    const next: [number, number] = [priceRange[0], clamped];
+    setPriceRange(next);
+    setPriceRangeDraft(next);
     setMaxInput(clamped.toString());
   };
 
-  const filtered = products
-    .filter((p) => {
-      if (activeSubcat && p.subcategory !== activeSubcat) return false;
-      if (p.price < priceRange[0] || p.price > priceRange[1]) return false;
-      if (inStockOnly && p.in_stock <= 0) return false;
-      return true;
-    })
-    .sort((a, b) => {
-      if (sortBy === "price-asc") return a.price - b.price;
-      if (sortBy === "price-desc") return b.price - a.price;
-      return a.name.localeCompare(b.name);
-    });
+  const filtered = useMemo(() => {
+    return products
+      .filter((p) => {
+        if (activeSubcat && p.subcategory !== activeSubcat) return false;
+        if (p.price < priceRange[0] || p.price > priceRange[1]) return false;
+        if (inStockOnly && p.in_stock <= 0) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === "price-asc") return a.price - b.price;
+        if (sortBy === "price-desc") return b.price - a.price;
+        return a.name.localeCompare(b.name);
+      });
+  }, [products, activeSubcat, priceRange, inStockOnly, sortBy]);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("ru-RU", {
