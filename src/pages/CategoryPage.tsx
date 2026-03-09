@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { categories } from "@/data/products";
 import { fetchProductsByCategory } from "@/lib/api";
 import { ProductCard } from "@/components/ProductCard";
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -14,7 +14,10 @@ export default function CategoryPage() {
   const [searchParams] = useSearchParams();
   const category = categories.find((c) => c.id === id);
   const [activeSubcat, setActiveSubcat] = useState<string | null>(null);
+  // priceRange = применённый фильтр (влияет на список)
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500000]);
+  // priceRangeDraft = текущее значение при перетаскивании (не трогает список)
+  const [priceRangeDraft, setPriceRangeDraft] = useState<[number, number]>([0, 500000]);
   const [minInput, setMinInput] = useState("");
   const [maxInput, setMaxInput] = useState("");
   const [inStockOnly, setInStockOnly] = useState(false);
@@ -38,61 +41,65 @@ export default function CategoryPage() {
   useEffect(() => {
     if (!products.length) return;
 
-    setPriceRange((prev) => {
+    const clampRange = (prev: [number, number]) => {
       const nextMax = maxPrice;
       const nextMin = Math.max(0, Math.min(prev[0], nextMax));
       const nextHigh = Math.max(nextMin, Math.min(prev[1], nextMax));
-      return [nextMin, nextHigh];
-    });
+      return [nextMin, nextHigh] as [number, number];
+    };
+
+    setPriceRange((prev) => clampRange(prev));
+    setPriceRangeDraft((prev) => clampRange(prev));
 
     setMinInput((v) => (v === "" ? "0" : v));
     setMaxInput((v) => (v === "" ? String(maxPrice) : v));
   }, [maxPrice, products.length]);
 
   const handleSliderChange = (v: number[]) => {
-    // ВАЖНО: на каждом движении обновляем только priceRange (без инпутов),
-    // чтобы drag не "срывался" из-за лишних ререндеров.
-    setPriceRange(v as [number, number]);
+    setPriceRangeDraft(v as [number, number]);
   };
 
   const handleSliderCommit = (v: number[]) => {
-    setMinInput(v[0].toString());
-    setMaxInput(v[1].toString());
+    const next = v as [number, number];
+    setPriceRange(next);
+    setPriceRangeDraft(next);
+    setMinInput(next[0].toString());
+    setMaxInput(next[1].toString());
   };
 
-  if (!category)
-    return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        Категория не найдена
-      </div>
-    );
 
   const handleMinBlur = () => {
     const val = parseInt(minInput) || 0;
     const clamped = Math.max(0, Math.min(val, priceRange[1]));
-    setPriceRange([clamped, priceRange[1]]);
+    const next: [number, number] = [clamped, priceRange[1]];
+    setPriceRange(next);
+    setPriceRangeDraft(next);
     setMinInput(clamped.toString());
   };
 
   const handleMaxBlur = () => {
     const val = parseInt(maxInput) || maxPrice;
     const clamped = Math.max(priceRange[0], Math.min(val, maxPrice));
-    setPriceRange([priceRange[0], clamped]);
+    const next: [number, number] = [priceRange[0], clamped];
+    setPriceRange(next);
+    setPriceRangeDraft(next);
     setMaxInput(clamped.toString());
   };
 
-  const filtered = products
-    .filter((p) => {
-      if (activeSubcat && p.subcategory !== activeSubcat) return false;
-      if (p.price < priceRange[0] || p.price > priceRange[1]) return false;
-      if (inStockOnly && p.in_stock <= 0) return false;
-      return true;
-    })
-    .sort((a, b) => {
-      if (sortBy === "price-asc") return a.price - b.price;
-      if (sortBy === "price-desc") return b.price - a.price;
-      return a.name.localeCompare(b.name);
-    });
+  const filtered = useMemo(() => {
+    return products
+      .filter((p) => {
+        if (activeSubcat && p.subcategory !== activeSubcat) return false;
+        if (p.price < priceRange[0] || p.price > priceRange[1]) return false;
+        if (inStockOnly && p.in_stock <= 0) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === "price-asc") return a.price - b.price;
+        if (sortBy === "price-desc") return b.price - a.price;
+        return a.name.localeCompare(b.name);
+      });
+  }, [products, activeSubcat, priceRange, inStockOnly, sortBy]);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("ru-RU", {
@@ -153,7 +160,7 @@ export default function CategoryPage() {
           />
         </div>
         <Slider
-          value={priceRange}
+          value={priceRangeDraft}
           onValueChange={handleSliderChange}
           onValueCommit={handleSliderCommit}
           min={0}
@@ -162,8 +169,8 @@ export default function CategoryPage() {
           className="mb-2"
         />
         <div className="flex justify-between text-xs text-muted-foreground">
-          <span>{formatPrice(priceRange[0])}</span>
-          <span>{formatPrice(priceRange[1])}</span>
+          <span>{formatPrice(priceRangeDraft[0])}</span>
+          <span>{formatPrice(priceRangeDraft[1])}</span>
         </div>
       </div>
 
@@ -193,6 +200,14 @@ export default function CategoryPage() {
       </div>
     </div>
   );
+
+  if (!category) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        Категория не найдена
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
