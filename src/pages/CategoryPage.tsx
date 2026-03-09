@@ -166,7 +166,7 @@ export default function CategoryPage() {
           />
         </div>
         <Slider
-          value={priceRange}
+          value={priceRangeDraft}
           onValueChange={handleSliderChange}
           onValueCommit={handleSliderCommit}
           min={0}
@@ -175,8 +175,8 @@ export default function CategoryPage() {
           className="mb-2"
         />
         <div className="flex justify-between text-xs text-muted-foreground">
-          <span>{formatPrice(priceRange[0])}</span>
-          <span>{formatPrice(priceRange[1])}</span>
+          <span>{formatPrice(priceRangeDraft[0])}</span>
+          <span>{formatPrice(priceRangeDraft[1])}</span>
         </div>
       </div>
 
