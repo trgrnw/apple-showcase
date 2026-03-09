@@ -123,16 +123,20 @@ export default function AdminPage() {
                   <p><span className="text-muted-foreground">Сумма:</span> {formatPrice(order.total)}</p>
                 </div>
                 <div className="flex gap-2 pt-2">
-                  {["pending", "processing", "shipped", "delivered"].map((s) => (
-                    <Button
-                      key={s}
-                      size="sm"
-                      variant={order.status === s ? "default" : "outline"}
-                      onClick={() => handleStatusChange(order.id, s)}
-                    >
-                      {statusLabels[s]}
-                    </Button>
-                  ))}
+                  {order.status === "delivered" ? (
+                    <Badge variant="default">✓ Доставлен (финальный)</Badge>
+                  ) : (
+                    ["pending", "processing", "shipped", "delivered"].map((s) => (
+                      <Button
+                        key={s}
+                        size="sm"
+                        variant={order.status === s ? "default" : "outline"}
+                        onClick={() => handleStatusChange(order.id, s)}
+                      >
+                        {statusLabels[s]}
+                      </Button>
+                    ))
+                  )}
                 </div>
               </div>
             ))
