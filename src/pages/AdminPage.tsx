@@ -179,16 +179,20 @@ export default function AdminPage() {
                   <p className="text-xs text-muted-foreground">Кол-во: {supply.quantity} • Поставщик: {supply.supplier} • {new Date(supply.created_at).toLocaleDateString("ru-RU")}</p>
                 </div>
                 <div className="flex gap-2">
-                  {["ordered", "in_transit", "received"].map((s) => (
-                    <Button
-                      key={s}
-                      size="sm"
-                      variant={supply.status === s ? "default" : "outline"}
-                      onClick={() => handleSupplyStatus(supply.id, s)}
-                    >
-                      {supplyStatusLabels[s]}
-                    </Button>
-                  ))}
+                  {supply.status === "received" ? (
+                    <Badge variant="default">✓ Получено (финальный)</Badge>
+                  ) : (
+                    ["ordered", "in_transit", "received"].map((s) => (
+                      <Button
+                        key={s}
+                        size="sm"
+                        variant={supply.status === s ? "default" : "outline"}
+                        onClick={() => handleSupplyStatus(supply.id, s)}
+                      >
+                        {supplyStatusLabels[s]}
+                      </Button>
+                    ))
+                  )}
                 </div>
               </div>
             ))
