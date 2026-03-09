@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { categories } from "@/data/products";
 import { fetchProductsByCategory } from "@/lib/api";
 import { ProductCard } from "@/components/ProductCard";
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
