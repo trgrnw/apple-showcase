@@ -67,12 +67,6 @@ export default function CategoryPage() {
     setMaxInput(next[1].toString());
   };
 
-  if (!category)
-    return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        Категория не найдена
-      </div>
-    );
 
   const handleMinBlur = () => {
     const val = parseInt(minInput) || 0;
