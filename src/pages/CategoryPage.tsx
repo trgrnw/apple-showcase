@@ -14,7 +14,10 @@ export default function CategoryPage() {
   const [searchParams] = useSearchParams();
   const category = categories.find((c) => c.id === id);
   const [activeSubcat, setActiveSubcat] = useState<string | null>(null);
+  // priceRange = применённый фильтр (влияет на список)
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500000]);
+  // priceRangeDraft = текущее значение при перетаскивании (не трогает список)
+  const [priceRangeDraft, setPriceRangeDraft] = useState<[number, number]>([0, 500000]);
   const [minInput, setMinInput] = useState("");
   const [maxInput, setMaxInput] = useState("");
   const [inStockOnly, setInStockOnly] = useState(false);
@@ -38,26 +41,30 @@ export default function CategoryPage() {
   useEffect(() => {
     if (!products.length) return;
 
-    setPriceRange((prev) => {
+    const clampRange = (prev: [number, number]) => {
       const nextMax = maxPrice;
       const nextMin = Math.max(0, Math.min(prev[0], nextMax));
       const nextHigh = Math.max(nextMin, Math.min(prev[1], nextMax));
-      return [nextMin, nextHigh];
-    });
+      return [nextMin, nextHigh] as [number, number];
+    };
+
+    setPriceRange((prev) => clampRange(prev));
+    setPriceRangeDraft((prev) => clampRange(prev));
 
     setMinInput((v) => (v === "" ? "0" : v));
     setMaxInput((v) => (v === "" ? String(maxPrice) : v));
   }, [maxPrice, products.length]);
 
   const handleSliderChange = (v: number[]) => {
-    // ВАЖНО: на каждом движении обновляем только priceRange (без инпутов),
-    // чтобы drag не "срывался" из-за лишних ререндеров.
-    setPriceRange(v as [number, number]);
+    setPriceRangeDraft(v as [number, number]);
   };
 
   const handleSliderCommit = (v: number[]) => {
-    setMinInput(v[0].toString());
-    setMaxInput(v[1].toString());
+    const next = v as [number, number];
+    setPriceRange(next);
+    setPriceRangeDraft(next);
+    setMinInput(next[0].toString());
+    setMaxInput(next[1].toString());
   };
 
   if (!category)
