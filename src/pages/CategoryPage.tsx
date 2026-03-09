@@ -32,15 +32,40 @@ export default function CategoryPage() {
     enabled: !!id,
   });
 
-  if (!category) return <div className="container mx-auto px-4 py-16 text-center">Категория не найдена</div>;
-
   const maxPrice = Math.max(...products.map((p) => p.price), 500000);
 
+  // Инициализируем/нормализуем значения после загрузки товаров
+  useEffect(() => {
+    if (!products.length) return;
+
+    setPriceRange((prev) => {
+      const nextMax = maxPrice;
+      const nextMin = Math.max(0, Math.min(prev[0], nextMax));
+      const nextHigh = Math.max(nextMin, Math.min(prev[1], nextMax));
+      return [nextMin, nextHigh];
+    });
+
+    setMinInput((v) => (v === "" ? "0" : v));
+    setMaxInput((v) => (v === "" ? String(maxPrice) : v));
+  }, [maxPrice, products.length]);
+
   const handleSliderChange = (v: number[]) => {
+    // ВАЖНО: на каждом движении обновляем только priceRange (без инпутов),
+    // чтобы drag не "срывался" из-за лишних ререндеров.
     setPriceRange(v as [number, number]);
+  };
+
+  const handleSliderCommit = (v: number[]) => {
     setMinInput(v[0].toString());
     setMaxInput(v[1].toString());
   };
+
+  if (!category)
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        Категория не найдена
+      </div>
+    );
 
   const handleMinBlur = () => {
     const val = parseInt(minInput) || 0;
@@ -70,7 +95,11 @@ export default function CategoryPage() {
     });
 
   const formatPrice = (price: number) =>
-    new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB", maximumFractionDigits: 0 }).format(price);
+    new Intl.NumberFormat("ru-RU", {
+      style: "currency",
+      currency: "RUB",
+      maximumFractionDigits: 0,
+    }).format(price);
 
   const Filters = () => (
     <div className="space-y-6">
@@ -79,7 +108,9 @@ export default function CategoryPage() {
         <div className="space-y-1">
           <button
             onClick={() => setActiveSubcat(null)}
-            className={`block w-full text-left px-3 py-1.5 text-sm rounded-md transition-colors ${!activeSubcat ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
+            className={`block w-full text-left px-3 py-1.5 text-sm rounded-md transition-colors ${
+              !activeSubcat ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+            }`}
           >
             Все
           </button>
@@ -87,7 +118,11 @@ export default function CategoryPage() {
             <button
               key={sub}
               onClick={() => setActiveSubcat(activeSubcat === sub ? null : sub)}
-              className={`block w-full text-left px-3 py-1.5 text-sm rounded-md transition-colors ${activeSubcat === sub ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
+              className={`block w-full text-left px-3 py-1.5 text-sm rounded-md transition-colors ${
+                activeSubcat === sub
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-accent"
+              }`}
             >
               {sub}
             </button>
@@ -120,6 +155,7 @@ export default function CategoryPage() {
         <Slider
           value={priceRange}
           onValueChange={handleSliderChange}
+          onValueCommit={handleSliderCommit}
           min={0}
           max={maxPrice}
           step={1000}
@@ -146,7 +182,12 @@ export default function CategoryPage() {
 
       <div>
         <label className="flex items-center gap-2 text-sm cursor-pointer">
-          <input type="checkbox" checked={inStockOnly} onChange={(e) => setInStockOnly(e.target.checked)} className="rounded" />
+          <input
+            type="checkbox"
+            checked={inStockOnly}
+            onChange={(e) => setInStockOnly(e.target.checked)}
+            className="rounded"
+          />
           Только в наличии
         </label>
       </div>
